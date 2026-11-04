@@ -1,0 +1,44 @@
+<script type="module">
+
+import * as Plot from "https://cdn.jsdelivr.net/npm/@observablehq/plot@0.6/+esm";
+
+const ajaxEndpoint = `${indiciaData.esProxyAjaxUrl}/searchbyparams/${indiciaData.nid || 0}`;
+
+const post = new URLSearchParams();
+
+post.set("size", "5000");
+post.set("track_total_hits", "false");
+
+post.set("bool_queries[0][query_type]", "term");
+post.set("bool_queries[0][field]", "taxon.taxon_meaning_id");
+post.set("bool_queries[0][value]", "89876");
+post.set("bool_queries[0][bool_clause]", "filter");
+
+const response = await fetch(ajaxEndpoint, {
+    method: "POST",
+    credentials: "same-origin",
+    headers: {
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+        Accept: "application/json"
+    },
+    body: post
+});
+
+const result = await response.json();
+
+console.log(result);
+
+const data = (result.hits.hits).map(hit => ({
+    dayOfYear: +hit["_source"]["event"]["day_of_year"],
+    pointX: hit["_source"]["location"]["point"].split(',').map(Number)[0]
+}));
+
+console.log(data)
+
+const testPlot = Plot.dot(data, {x: "dayOfYear", y: "pointX"}).plot()
+
+const div = document.querySelector("#brc-vis-content"); // Again BRC Viz anchor point is convenient
+
+div.append(testPlot);
+
+</script>
